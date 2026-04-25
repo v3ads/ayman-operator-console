@@ -1,0 +1,87 @@
+@import "tailwindcss";
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --bg-base: #080b0f;
+  --bg-surface: #0d1117;
+  --bg-elevated: #131a22;
+  --bg-card: #0f1623;
+  --border: #1e2d3d;
+  --border-bright: #2a3f55;
+  --amber: #f59e0b;
+  --amber-dim: #b45309;
+  --amber-glow: rgba(245, 158, 11, 0.15);
+  --green: #10b981;
+  --red: #ef4444;
+  --blue: #3b82f6;
+  --text-primary: #e2e8f0;
+  --text-secondary: #64748b;
+  --text-amber: #fbbf24;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'JetBrains Mono', monospace;
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.font-display { font-family: 'Syne', sans-serif; }
+
+@keyframes pulse-green {
+  0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(16,185,129,0); }
+}
+@keyframes pulse-red {
+  0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(239,68,68,0); }
+}
+@keyframes pulse-amber {
+  0%,100% { box-shadow: 0 0 0 0 rgba(245,158,11,0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+}
+
+.status-online { animation: pulse-green 2s infinite; }
+.status-alert  { animation: pulse-red 1.5s infinite; }
+.status-warn   { animation: pulse-amber 2s infinite; }
+
+@keyframes blink {
+  0%,100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: '█';
+  animation: blink 1s step-end infinite;
+  color: var(--amber);
+  margin-left: 2px;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-base); }
+::-webkit-scrollbar-thumb { background: #2a3f55; border-radius: 2px; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.3s ease forwards; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.animate-slideIn { animation: slideIn 0.25s ease forwards; }
