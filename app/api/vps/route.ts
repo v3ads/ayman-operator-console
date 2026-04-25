@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 export const runtime = "edge";
 export const revalidate = 60;
 
-const OPS_API_URL = process.env.OPS_API_URL ?? "http://2.24.220.78:8765";
+const OPS_API_URL = process.env.OPS_API_URL ?? "https://hermes.ramihost.cloud/ops";
 
 export async function GET() {
   try {
