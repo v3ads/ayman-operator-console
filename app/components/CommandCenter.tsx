@@ -257,7 +257,7 @@ export default function CommandCenter() {
         {(isRunning || currentOutput) && (
           <Card
             title="Live Output"
-            subtitle={isRunning ? `Rami is responding…` : "Last response"}mdRef.current}` : "Last command"}
+            subtitle={isRunning ? `Rami is responding…` : "Last response"}
           >
             <div
               ref={outputRef}
