@@ -6,11 +6,9 @@ import {
 } from "lucide-react";
 import Card from "./Card";
 import StatusBadge from "./StatusBadge";
-
 // ── Config ───────────────────────────────────────────────────────────────────
 const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "wss://hermes.ramihost.cloud/ws";
 const WS_TOKEN = process.env.NEXT_PUBLIC_WS_TOKEN ?? "ws-ayman-2026-secure";
-
 // ── Quick commands ────────────────────────────────────────────────────────────
 const quickCommands = [
   { label: "System Status",    cmd: "uptime && free -h && df -h /",       icon: "Activity"  },
@@ -22,7 +20,6 @@ const quickCommands = [
   { label: "Restart Hermes",   cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart", icon: "RotateCw" },
   { label: "Clear Screen",     cmd: "clear",                              icon: "Trash2"    },
 ];
-
 const ICON_MAP: Record<string, React.ReactNode> = {
   Activity:  <Activity size={13} />,
   Terminal:  <Terminal size={13} />,
@@ -32,10 +29,8 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   RotateCw:  <RotateCw size={13} />,
   Trash2:    <Trash2 size={13} />,
 };
-
 // ── Types ─────────────────────────────────────────────────────────────────────
 type ConnState = "connecting" | "connected" | "disconnected" | "error";
-
 interface LogEntry {
   id: number;
   cmd: string;
@@ -44,13 +39,11 @@ interface LogEntry {
   status: "ok" | "err" | "running";
   duration?: string;
 }
-
 // ── ANSI strip helper ─────────────────────────────────────────────────────────
 function stripAnsi(str: string): string {
   // eslint-disable-next-line no-control-regex
   return str.replace(/\x1B\[[0-9;]*[mGKHF]/g, "").replace(/\r/g, "");
 }
-
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function CommandCenter() {
   const [input, setInput] = useState("");
@@ -64,7 +57,11 @@ export default function CommandCenter() {
   const currentCmdRef = useRef<string>("");
   const startTimeRef = useRef<number>(0);
   const outputBufRef = useRef<string>("");
-
+  const isRunningRef = useRef(false);
+  // Keep isRunningRef in sync with isRunning state
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
   // ── WebSocket connect ──────────────────────────────────────────────────────
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= 1) return;
@@ -72,11 +69,9 @@ export default function CommandCenter() {
     const url = `${WS_URL}/?token=${encodeURIComponent(WS_TOKEN)}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
-
     ws.onopen = () => {
       setConnState("connected");
     };
-
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
@@ -97,43 +92,43 @@ export default function CommandCenter() {
         }
       } catch {}
     };
-
     ws.onerror = () => setConnState("error");
     ws.onclose = () => {
       setConnState("disconnected");
       setIsRunning(false);
+      isRunningRef.current = false;
     };
   }, []);
-
   useEffect(() => {
     connect();
     return () => {
       wsRef.current?.close();
     };
   }, [connect]);
-
   // ── Send command ───────────────────────────────────────────────────────────
   const run = useCallback((cmd: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       connect();
       return;
     }
+    if (isRunningRef.current) return;
     const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
     currentCmdRef.current = cmd;
     startTimeRef.current = Date.now();
     outputBufRef.current = "";
     setCurrentOutput("");
     setIsRunning(true);
-    setInput("");
-
+    isRunningRef.current = true;
+    // Inject command into input field so user sees what's running, then clear after send
+    setInput(cmd);
     // Send command with newline to bash
     wsRef.current.send(JSON.stringify({ type: "input", data: cmd + "\n" }));
-
+    // Clear input after sending
+    setInput("");
     // After a short delay, capture output into log entry
     // We use a sentinel: send echo of unique marker after command
     const marker = `__CMD_DONE_${Date.now()}__`;
     wsRef.current.send(JSON.stringify({ type: "input", data: `echo "${marker}"\n` }));
-
     // Poll for marker in output
     const poll = setInterval(() => {
       if (outputBufRef.current.includes(marker)) {
@@ -144,7 +139,6 @@ export default function CommandCenter() {
           .filter(l => !l.includes(marker) && !l.trim().startsWith("$"))
           .join("\n")
           .trim();
-
         const id = ++entryIdRef.current;
         setLog(prev => [{
           id,
@@ -155,20 +149,21 @@ export default function CommandCenter() {
           duration,
         }, ...prev.slice(0, 49)]);
         setIsRunning(false);
+        isRunningRef.current = false;
       }
     }, 200);
-
     // Timeout after 30s
     setTimeout(() => {
       clearInterval(poll);
-      if (isRunning) setIsRunning(false);
+      if (isRunningRef.current) {
+        setIsRunning(false);
+        isRunningRef.current = false;
+      }
     }, 30000);
-  }, [connect, isRunning]);
-
+  }, [connect]);
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim()) run(input.trim());
   };
-
   // ── Connection indicator ───────────────────────────────────────────────────
   const connColor = {
     connected:    "#10b981",
@@ -176,14 +171,12 @@ export default function CommandCenter() {
     disconnected: "#64748b",
     error:        "#ef4444",
   }[connState];
-
   const connLabel = {
     connected:    "Connected",
     connecting:   "Connecting…",
     disconnected: "Disconnected",
     error:        "Error",
   }[connState];
-
   return (
     <div className="animate-slideIn grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* ── Left: Quick Commands + Input ── */}
@@ -213,13 +206,15 @@ export default function CommandCenter() {
             </button>
           )}
         </div>
-
-        <Card title="Quick Commands" subtitle="Click to run">
+        <Card title="Quick Commands" subtitle="Click to run instantly">
           <div className="p-3 grid grid-cols-1 gap-2">
             {quickCommands.map((q) => (
               <button
                 key={q.cmd}
-                onClick={() => run(q.cmd)}
+                onClick={() => {
+                  setInput(q.cmd);
+                  run(q.cmd);
+                }}
                 disabled={connState !== "connected" || isRunning}
                 className="flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all duration-150 group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "#131a22", border: "1px solid #1e2d3d", color: "#94a3b8" }}
@@ -244,7 +239,6 @@ export default function CommandCenter() {
             ))}
           </div>
         </Card>
-
         {/* Manual input */}
         <Card title="Terminal Input">
           <div className="p-3">
@@ -270,7 +264,6 @@ export default function CommandCenter() {
           </div>
         </Card>
       </div>
-
       {/* ── Right: Live Output + History ── */}
       <div className="lg:col-span-2 space-y-4">
         {/* Live output */}
@@ -299,7 +292,6 @@ export default function CommandCenter() {
             </div>
           </Card>
         )}
-
         {/* Command history */}
         {log.length > 0 && (
           <Card title="Command History" subtitle="This session">
@@ -331,7 +323,6 @@ export default function CommandCenter() {
             </div>
           </Card>
         )}
-
         {/* Empty state */}
         {!isRunning && !currentOutput && log.length === 0 && (
           <Card title="Live Output" subtitle="Session only · resets on reload">
