@@ -87,8 +87,27 @@ export default function CommandCenter() {
               outputRef.current.scrollTop = outputRef.current.scrollHeight;
             }
           });
+        } else if (msg.type === "done") {
+          // Hermes finished responding — add to history
+          const duration = ((Date.now() - startTimeRef.current) / 1000).toFixed(1) + "s";
+          const finalOutput = outputBufRef.current.trim();
+          const cmd = currentCmdRef.current;
+          const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
+          const id = ++entryIdRef.current;
+          setLog(prev => [{
+            id,
+            cmd,
+            output: finalOutput,
+            ts,
+            status: "ok",
+            duration,
+          }, ...prev.slice(0, 49)]);
+          setIsRunning(false);
+          isRunningRef.current = false;
         } else if (msg.type === "error") {
           setConnState("error");
+          setIsRunning(false);
+          isRunningRef.current = false;
         }
       } catch {}
     };
@@ -105,61 +124,32 @@ export default function CommandCenter() {
       wsRef.current?.close();
     };
   }, [connect]);
-  // ── Send command ───────────────────────────────────────────────────────────
+  // ── Send message to Hermes AI ─────────────────────────────────────────────
   const run = useCallback((cmd: string) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
       connect();
       return;
     }
     if (isRunningRef.current) return;
-    const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
     currentCmdRef.current = cmd;
     startTimeRef.current = Date.now();
     outputBufRef.current = "";
     setCurrentOutput("");
     setIsRunning(true);
     isRunningRef.current = true;
-    // Inject command into input field so user sees what's running, then clear after send
+    // Show command in input field briefly
     setInput(cmd);
-    // Send command with newline to bash
-    wsRef.current.send(JSON.stringify({ type: "input", data: cmd + "\n" }));
+    // Send message to Hermes AI (no newline needed — server handles it)
+    wsRef.current.send(JSON.stringify({ type: "input", data: cmd }));
     // Clear input after sending
-    setInput("");
-    // After a short delay, capture output into log entry
-    // We use a sentinel: send echo of unique marker after command
-    const marker = `__CMD_DONE_${Date.now()}__`;
-    wsRef.current.send(JSON.stringify({ type: "input", data: `echo "${marker}"\n` }));
-    // Poll for marker in output
-    const poll = setInterval(() => {
-      if (outputBufRef.current.includes(marker)) {
-        clearInterval(poll);
-        const duration = ((Date.now() - startTimeRef.current) / 1000).toFixed(1) + "s";
-        const cleanOutput = outputBufRef.current
-          .split("\n")
-          .filter(l => !l.includes(marker) && !l.trim().startsWith("$"))
-          .join("\n")
-          .trim();
-        const id = ++entryIdRef.current;
-        setLog(prev => [{
-          id,
-          cmd,
-          output: cleanOutput,
-          ts,
-          status: "ok",
-          duration,
-        }, ...prev.slice(0, 49)]);
-        setIsRunning(false);
-        isRunningRef.current = false;
-      }
-    }, 200);
-    // Timeout after 30s
+    setTimeout(() => setInput(""), 300);
+    // Safety timeout after 120s (Hermes can take a while for complex tasks)
     setTimeout(() => {
-      clearInterval(poll);
       if (isRunningRef.current) {
         setIsRunning(false);
         isRunningRef.current = false;
       }
-    }, 30000);
+    }, 120000);
   }, [connect]);
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim()) run(input.trim());
@@ -206,15 +196,12 @@ export default function CommandCenter() {
             </button>
           )}
         </div>
-        <Card title="Quick Commands" subtitle="Click to run instantly">
+        <Card title="Quick Commands" subtitle="Click to ask Rami">
           <div className="p-3 grid grid-cols-1 gap-2">
             {quickCommands.map((q) => (
               <button
                 key={q.cmd}
-                onClick={() => {
-                  setInput(q.cmd);
-                  run(q.cmd);
-                }}
+                onClick={() => run(q.cmd)}
                 disabled={connState !== "connected" || isRunning}
                 className="flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all duration-150 group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{ background: "#131a22", border: "1px solid #1e2d3d", color: "#94a3b8" }}
@@ -240,7 +227,7 @@ export default function CommandCenter() {
           </div>
         </Card>
         {/* Manual input */}
-        <Card title="Terminal Input">
+        <Card title="Chat with Rami">
           <div className="p-3">
             <div
               className="flex items-center gap-2 px-3 py-2 rounded"
@@ -251,7 +238,7 @@ export default function CommandCenter() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder={connState === "connected" ? "hermes ..." : "Not connected…"}
+                placeholder={connState === "connected" ? "Ask Rami anything…" : "Not connected…"}
                 disabled={connState !== "connected" || isRunning}
                 className="flex-1 bg-transparent text-xs outline-none placeholder-slate-700 disabled:opacity-50"
                 style={{ color: "#e2e8f0", fontFamily: "inherit" }}
@@ -259,7 +246,7 @@ export default function CommandCenter() {
               {isRunning && <Loader2 size={11} style={{ color: "#f59e0b" }} className="animate-spin shrink-0" />}
             </div>
             <p className="text-[10px] mt-2" style={{ color: "#334155" }}>
-              Press Enter to execute · {connLabel}
+              Press Enter to send · {connLabel}
             </p>
           </div>
         </Card>
@@ -270,7 +257,7 @@ export default function CommandCenter() {
         {(isRunning || currentOutput) && (
           <Card
             title="Live Output"
-            subtitle={isRunning ? `Running: ${currentCmdRef.current}` : "Last command"}
+            subtitle={isRunning ? `Rami is responding…` : "Last response"}mdRef.current}` : "Last command"}
           >
             <div
               ref={outputRef}
