@@ -1,200 +1,347 @@
 "use client";
+import { useEffect, useState } from "react";
+import { Server, Cpu, HardDrive, Container, Shield, Globe, RefreshCw, AlertTriangle } from "lucide-react";
 
-import { vpsHealth, services, cpuHistory, ramHistory } from "../data/mock";
-import Card from "./Card";
-import StatusBadge from "./StatusBadge";
-
-function MiniGraph({ values, color }: { values: number[]; color: string }) {
-  const max = Math.max(...values);
-  const h = 36;
-  const w = 120;
-  const step = w / (values.length - 1);
-  const pts = values.map((v, i) => `${i * step},${h - (v / max) * h}`).join(" ");
-
-  return (
-    <svg width={w} height={h} style={{ display: "block" }}>
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="1.5"
-        strokeLinejoin="round"
-        points={pts}
-        opacity="0.8"
-      />
-      {/* Area fill */}
-      <polyline
-        fill={color}
-        fillOpacity="0.08"
-        stroke="none"
-        points={`0,${h} ${pts} ${(values.length - 1) * step},${h}`}
-      />
-    </svg>
-  );
+// ── Types ────────────────────────────────────────────────────────────────────
+interface VpsData {
+  host: { hostname: string; os: string; kernel: string; uptime: string; publicIp: string; auditTime: string };
+  cpu: { cores: number; load1: number; load5: number; load15: number };
+  ram: { totalMb: number; usedMb: number; pct: number };
+  disk: { total: string; used: string; pct: number };
+  docker: {
+    containers: { name: string; status: string; uptime: string; image: string }[];
+    stats: Record<string, { cpu: string; mem: string }>;
+  };
+  services: { ssh: string; traefik: string; failedUnits: number };
+  ssl: { domain: string; expiry: string; status: string; days: number }[];
+  security: {
+    securityUpdates: number;
+    totalUpdates: number;
+    permitRoot: string;
+    passwordAuth: string;
+    bannedNow: number;
+    bannedTotal: number;
+    topOffenders: { count: number; ip: string }[];
+  };
+  summary: { ok: string[]; warn: string[]; crit: string[] };
+  fetchedAt: string;
+  error?: string;
 }
 
-function GaugeBar({
-  label,
-  pct,
-  detail,
-  color = "amber",
-}: {
-  label: string;
-  pct: number;
-  detail: string;
-  color?: "amber" | "green" | "red";
-}) {
-  const barBg =
-    color === "amber"
-      ? "linear-gradient(90deg,#b45309,#f59e0b)"
-      : color === "red"
-      ? "linear-gradient(90deg,#7f1d1d,#ef4444)"
-      : "linear-gradient(90deg,#065f46,#10b981)";
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const C = {
+  amber: "#f59e0b",
+  green: "#10b981",
+  red: "#ef4444",
+  yellow: "#eab308",
+  blue: "#3b82f6",
+  muted: "#64748b",
+  dim: "#334155",
+  border: "#1e2d3d",
+  surface: "#0d1117",
+  card: "#0a0f16",
+  text: "#e2e8f0",
+};
 
+function pctColor(pct: number) {
+  if (pct >= 90) return C.red;
+  if (pct >= 70) return C.yellow;
+  return C.green;
+}
+
+function Bar({ pct, color }: { pct: number; color: string }) {
   return (
-    <div>
-      <div className="flex justify-between items-baseline mb-1">
-        <span className="text-[10px] uppercase tracking-widest" style={{ color: "#64748b" }}>
-          {label}
-        </span>
-        <span className="text-xs" style={{ color: "#e2e8f0" }}>
-          {detail}
-        </span>
-      </div>
-      <div
-        className="h-1.5 w-full rounded-full"
-        style={{ background: "#1e2d3d" }}
-      >
-        <div
-          className="h-full rounded-full"
-          style={{
-            width: `${pct}%`,
-            background: barBg,
-            boxShadow: `0 0 6px ${color === "amber" ? "rgba(245,158,11,0.3)" : color === "red" ? "rgba(239,68,68,0.3)" : "rgba(16,185,129,0.3)"}`,
-            transition: "width 0.5s ease",
-          }}
-        />
-      </div>
-      <div className="text-right text-[10px] mt-0.5" style={{ color: "#334155" }}>
-        {pct}%
-      </div>
+    <div style={{ background: C.border, borderRadius: 2, height: 4, overflow: "hidden" }}>
+      <div style={{ width: `${Math.min(pct, 100)}%`, background: color, height: "100%", borderRadius: 2, transition: "width 0.5s ease" }} />
     </div>
   );
 }
 
-export default function VPSHealth() {
+function MetricCard({ icon, label, value, sub, pct }: { icon: React.ReactNode; label: string; value: string; sub?: string; pct?: number }) {
+  const color = pct !== undefined ? pctColor(pct) : C.green;
   return (
-    <div className="animate-slideIn space-y-4">
-      {/* Top metrics row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          { label: "CPU",  value: `${vpsHealth.cpu.pct}%`,      sub: `${vpsHealth.cpu.cores} cores · ${vpsHealth.cpu.mhz} MHz`, color: "#f59e0b" },
-          { label: "RAM",  value: `${vpsHealth.ram.usedGb} GB`, sub: `of ${vpsHealth.ram.totalGb} GB · ${vpsHealth.ram.pct}%`, color: "#3b82f6" },
-          { label: "DISK", value: `${vpsHealth.disk.usedGb} GB`,sub: `of ${vpsHealth.disk.totalGb} GB · ${vpsHealth.disk.pct}%`, color: "#10b981" },
-          { label: "TEMP", value: vpsHealth.temp,               sub: `Load ${vpsHealth.load[0]} · ${vpsHealth.load[1]} · ${vpsHealth.load[2]}`, color: "#e2e8f0" },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg p-4"
-            style={{ background: "#0f1623", border: "1px solid #1e2d3d" }}
-          >
-            <div className="text-[10px] uppercase tracking-widest mb-1" style={{ color: "#64748b" }}>
-              {m.label}
-            </div>
-            <div className="text-2xl font-700" style={{ color: m.color, fontFamily: "'Syne',sans-serif" }}>
-              {m.value}
-            </div>
-            <div className="text-[10px] mt-1" style={{ color: "#334155" }}>
-              {m.sub}
-            </div>
-          </div>
-        ))}
+    <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px 14px" }}>
+      <div className="flex items-center gap-2 mb-2" style={{ color: C.muted }}>
+        {icon}
+        <span style={{ fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase" }}>{label}</span>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Resource bars */}
-        <Card title="Resource Usage">
-          <div className="p-4 space-y-5">
-            <GaugeBar label="CPU"  pct={vpsHealth.cpu.pct}  detail={`${vpsHealth.cpu.pct}% used`} color="amber" />
-            <GaugeBar label="RAM"  pct={vpsHealth.ram.pct}  detail={`${vpsHealth.ram.usedGb} / ${vpsHealth.ram.totalGb} GB`} color="amber" />
-            <GaugeBar label="DISK" pct={vpsHealth.disk.pct} detail={`${vpsHealth.disk.usedGb} / ${vpsHealth.disk.totalGb} GB`} color="green" />
-            <GaugeBar label="SWAP" pct={vpsHealth.swap.pct} detail={`${vpsHealth.swap.usedGb} / ${vpsHealth.swap.totalGb} GB`} color="green" />
-          </div>
-        </Card>
-
-        {/* Mini charts */}
-        <Card title="10-Sample Trend">
-          <div className="p-4 space-y-6">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] uppercase tracking-widest" style={{ color: "#64748b" }}>CPU %</span>
-                <span className="text-xs" style={{ color: "#f59e0b" }}>now {cpuHistory[cpuHistory.length - 1]}%</span>
-              </div>
-              <MiniGraph values={cpuHistory} color="#f59e0b" />
-            </div>
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-[10px] uppercase tracking-widest" style={{ color: "#64748b" }}>RAM %</span>
-                <span className="text-xs" style={{ color: "#3b82f6" }}>now {ramHistory[ramHistory.length - 1]}%</span>
-              </div>
-              <MiniGraph values={ramHistory} color="#3b82f6" />
-            </div>
-            <div className="flex gap-6">
-              <div>
-                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#64748b" }}>NET IN</div>
-                <div className="text-sm" style={{ color: "#10b981" }}>{vpsHealth.netIn}</div>
-              </div>
-              <div>
-                <div className="text-[10px] uppercase tracking-widest mb-0.5" style={{ color: "#64748b" }}>NET OUT</div>
-                <div className="text-sm" style={{ color: "#10b981" }}>{vpsHealth.netOut}</div>
-              </div>
-            </div>
-          </div>
-        </Card>
+      <div style={{ fontSize: 20, fontWeight: 700, color: pct !== undefined ? color : C.text, fontFamily: "JetBrains Mono, monospace" }}>
+        {value}
       </div>
-
-      {/* Services */}
-      <Card title="Services" subtitle={`${services.filter(s => s.status === "online").length}/${services.length} running`}>
-        <div className="overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead>
-              <tr style={{ borderBottom: "1px solid #1e2d3d" }}>
-                {["Service", "Status", "PID", "Memory", "Restarts"].map((h) => (
-                  <th
-                    key={h}
-                    className="text-left px-4 py-2 text-[10px] uppercase tracking-widest font-500"
-                    style={{ color: "#334155" }}
-                  >
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {services.map((svc) => (
-                <tr
-                  key={svc.name}
-                  className="hover:bg-[#131a22] transition-colors"
-                  style={{ borderBottom: "1px solid #1a2433" }}
-                >
-                  <td className="px-4 py-2.5">
-                    <code style={{ color: "#e2e8f0" }}>{svc.name}</code>
-                  </td>
-                  <td className="px-4 py-2.5">
-                    <StatusBadge status={svc.status as "online" | "warn"} pulse />
-                  </td>
-                  <td className="px-4 py-2.5" style={{ color: "#64748b" }}>{svc.pid}</td>
-                  <td className="px-4 py-2.5" style={{ color: "#94a3b8" }}>{svc.memory}</td>
-                  <td className="px-4 py-2.5">
-                    <span style={{ color: svc.restarts > 1 ? "#ef4444" : svc.restarts === 1 ? "#f59e0b" : "#334155" }}>
-                      {svc.restarts}×
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {sub && <div style={{ fontSize: 11, color: C.muted, marginTop: 2 }}>{sub}</div>}
+      {pct !== undefined && (
+        <div className="mt-2">
+          <Bar pct={pct} color={color} />
         </div>
-      </Card>
+      )}
+    </div>
+  );
+}
+
+function SectionTitle({ icon, title }: { icon: React.ReactNode; title: string }) {
+  return (
+    <div className="flex items-center gap-2 mb-3" style={{ color: C.amber }}>
+      {icon}
+      <span style={{ fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600 }}>{title}</span>
+    </div>
+  );
+}
+
+function StatusDot({ ok }: { ok: boolean }) {
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        width: 7,
+        height: 7,
+        borderRadius: "50%",
+        background: ok ? C.green : C.red,
+        flexShrink: 0,
+      }}
+    />
+  );
+}
+
+// ── Main Component ────────────────────────────────────────────────────────────
+export default function VPSHealth() {
+  const [data, setData] = useState<VpsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/vps", { cache: "no-store" });
+      const json = await res.json();
+      setData(json);
+      setLastRefresh(new Date());
+    } catch {
+      setData({ error: "Failed to fetch VPS data" } as VpsData);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 60_000); // auto-refresh every 60s
+    return () => clearInterval(interval);
+  }, []);
+
+  if (loading && !data) {
+    return (
+      <div className="flex items-center justify-center py-20" style={{ color: C.muted }}>
+        <RefreshCw size={16} className="animate-spin mr-2" />
+        <span style={{ fontSize: 13 }}>Fetching live VPS data…</span>
+      </div>
+    );
+  }
+
+  if (!data || data.error) {
+    return (
+      <div className="flex items-center justify-center py-20" style={{ color: C.red }}>
+        <AlertTriangle size={16} className="mr-2" />
+        <span style={{ fontSize: 13 }}>{data?.error ?? "Unknown error"}</span>
+      </div>
+    );
+  }
+
+  const { host, cpu, ram, disk, docker, services, ssl, security, summary } = data;
+  const loadColor = cpu.load1 > cpu.cores * 0.8 ? C.red : cpu.load1 > cpu.cores * 0.5 ? C.yellow : C.green;
+
+  return (
+    <div style={{ color: C.text }}>
+      {/* Toolbar */}
+      <div className="flex items-center justify-between mb-5">
+        <div style={{ fontSize: 11, color: C.muted }}>
+          <span style={{ color: C.dim }}>LAST AUDIT:</span>{" "}
+          <span style={{ color: C.amber, fontFamily: "JetBrains Mono, monospace" }}>{host.auditTime}</span>
+        </div>
+        <button
+          onClick={fetchData}
+          disabled={loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded"
+          style={{ background: C.border, color: C.muted, fontSize: 11, border: `1px solid ${C.dim}`, cursor: "pointer" }}
+        >
+          <RefreshCw size={11} className={loading ? "animate-spin" : ""} />
+          {loading ? "Refreshing…" : "Refresh"}
+        </button>
+      </div>
+
+      {/* Host identity strip */}
+      <div
+        className="flex flex-wrap gap-4 mb-5 px-4 py-3 rounded"
+        style={{ background: C.card, border: `1px solid ${C.border}`, fontSize: 12 }}
+      >
+        <span><span style={{ color: C.dim }}>HOST</span> <span style={{ color: C.amber, fontFamily: "monospace" }}>{host.hostname}</span></span>
+        <span><span style={{ color: C.dim }}>OS</span> <span style={{ color: C.text }}>{host.os}</span></span>
+        <span><span style={{ color: C.dim }}>KERNEL</span> <span style={{ color: C.text }}>{host.kernel}</span></span>
+        <span><span style={{ color: C.dim }}>UPTIME</span> <span style={{ color: C.green }}>{host.uptime}</span></span>
+        <span><span style={{ color: C.dim }}>IP</span> <span style={{ color: C.text, fontFamily: "monospace" }}>{host.publicIp}</span></span>
+      </div>
+
+      {/* Summary badges */}
+      <div className="flex flex-wrap gap-2 mb-5">
+        {summary.crit.length > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded" style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", fontSize: 11, color: C.red }}>
+            <AlertTriangle size={11} /> {summary.crit.length} CRITICAL
+          </div>
+        )}
+        {summary.warn.length > 0 && (
+          <div className="flex items-center gap-1.5 px-3 py-1 rounded" style={{ background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.3)", fontSize: 11, color: C.yellow }}>
+            <AlertTriangle size={11} /> {summary.warn.length} WARN
+          </div>
+        )}
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded" style={{ background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", fontSize: 11, color: C.green }}>
+          ✓ {summary.ok.length} OK
+        </div>
+      </div>
+
+      {/* CPU / RAM / Disk metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+        <MetricCard
+          icon={<Cpu size={12} />}
+          label="CPU Load"
+          value={cpu.load1.toFixed(2)}
+          sub={`${cpu.cores} cores · 5m: ${cpu.load5} · 15m: ${cpu.load15}`}
+          pct={Math.round((cpu.load1 / cpu.cores) * 100)}
+        />
+        <MetricCard
+          icon={<Server size={12} />}
+          label="RAM"
+          value={`${ram.pct}%`}
+          sub={`${ram.usedMb} MB / ${ram.totalMb} MB`}
+          pct={ram.pct}
+        />
+        <MetricCard
+          icon={<HardDrive size={12} />}
+          label="Disk (/)"
+          value={`${disk.pct}%`}
+          sub={`${disk.used} used of ${disk.total}`}
+          pct={disk.pct}
+        />
+        <MetricCard
+          icon={<Container size={12} />}
+          label="Containers"
+          value={`${docker.containers.length}`}
+          sub="running"
+        />
+      </div>
+
+      {/* Docker containers */}
+      <div className="mb-6">
+        <SectionTitle icon={<Container size={13} />} title="Docker Containers" />
+        <div style={{ border: `1px solid ${C.border}`, borderRadius: 6, overflow: "hidden" }}>
+          {docker.containers.map((c, i) => {
+            const stats = docker.stats[c.name];
+            const shortName = c.name.replace("hermes-agent-0rp3-", "").replace("-1", "");
+            return (
+              <div
+                key={i}
+                className="flex items-center justify-between px-4 py-2.5"
+                style={{
+                  borderBottom: i < docker.containers.length - 1 ? `1px solid ${C.border}` : "none",
+                  background: i % 2 === 0 ? C.card : "transparent",
+                  fontSize: 12,
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <StatusDot ok={c.status === "running"} />
+                  <span style={{ color: C.text, fontFamily: "JetBrains Mono, monospace", fontSize: 11 }}>{shortName}</span>
+                </div>
+                <div className="flex items-center gap-4" style={{ color: C.muted }}>
+                  {stats && (
+                    <>
+                      <span style={{ fontFamily: "monospace", fontSize: 11 }}>CPU {stats.cpu}</span>
+                      <span style={{ fontFamily: "monospace", fontSize: 11 }}>MEM {stats.mem}</span>
+                    </>
+                  )}
+                  <span style={{ fontSize: 10, color: C.dim }}>{c.uptime}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* SSL Certificates */}
+      <div className="mb-6">
+        <SectionTitle icon={<Globe size={13} />} title="SSL Certificates" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {ssl.map((cert, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-3 py-2 rounded"
+              style={{ background: C.card, border: `1px solid ${C.border}`, fontSize: 11 }}
+            >
+              <div className="flex items-center gap-2">
+                <StatusDot ok={cert.days > 14} />
+                <span style={{ color: C.text, fontFamily: "monospace" }}>{cert.domain}</span>
+              </div>
+              <span style={{ color: cert.days > 30 ? C.green : cert.days > 14 ? C.yellow : C.red }}>
+                {cert.days}d
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Security */}
+      <div className="mb-6">
+        <SectionTitle icon={<Shield size={13} />} title="Security" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Sec Updates</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: security.securityUpdates > 0 ? C.red : C.green, fontFamily: "monospace" }}>
+              {security.securityUpdates}
+            </div>
+          </div>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Banned Now</div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: security.bannedNow > 0 ? C.yellow : C.green, fontFamily: "monospace" }}>
+              {security.bannedNow}
+            </div>
+          </div>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Root Login</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: security.permitRoot === "no" ? C.green : C.red, fontFamily: "monospace" }}>
+              {security.permitRoot === "no" ? "DISABLED" : "ENABLED"}
+            </div>
+          </div>
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Password Auth</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: security.passwordAuth === "no" ? C.green : C.red, fontFamily: "monospace" }}>
+              {security.passwordAuth === "no" ? "DISABLED" : "ENABLED"}
+            </div>
+          </div>
+        </div>
+        {security.topOffenders.length > 0 && (
+          <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px" }}>
+            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Top SSH Offenders (24h)</div>
+            <div className="flex flex-wrap gap-2">
+              {security.topOffenders.map((o, i) => (
+                <span key={i} style={{ fontFamily: "monospace", fontSize: 11, color: C.muted }}>
+                  <span style={{ color: C.red }}>{o.count}×</span> {o.ip}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* OK checks */}
+      {summary.ok.length > 0 && (
+        <div>
+          <SectionTitle icon={<Shield size={13} />} title={`All Clear — ${summary.ok.length} Checks Passed`} />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
+            {summary.ok.map((check, i) => (
+              <div key={i} className="flex items-center gap-2 px-3 py-1.5 rounded" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.1)", fontSize: 11, color: C.muted }}>
+                <span style={{ color: C.green }}>✓</span> {check}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
