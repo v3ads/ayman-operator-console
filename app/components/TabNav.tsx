@@ -1,23 +1,19 @@
 "use client";
-
-import { Terminal, Server, Bell, FolderKanban, BookOpen } from "lucide-react";
-
+import { Terminal, Server, Bell, FolderKanban, BookOpen, Bot } from "lucide-react";
 const TABS = [
   { id: "command",  label: "Command",  shortLabel: "CMD",  icon: Terminal },
   { id: "health",   label: "VPS Health", shortLabel: "VPS", icon: Server },
   { id: "alerts",   label: "Alerts",   shortLabel: "ALRT", icon: Bell },
   { id: "projects", label: "Projects", shortLabel: "PROJ", icon: FolderKanban },
   { id: "runbooks", label: "Runbooks", shortLabel: "RBK",  icon: BookOpen },
+  { id: "rami",     label: "Rami",     shortLabel: "RAMI", icon: Bot },
 ] as const;
-
 export type TabId = (typeof TABS)[number]["id"];
-
 interface TabNavProps {
   active: TabId;
   onSelect: (id: TabId) => void;
   alertCount?: number;
 }
-
 export default function TabNav({ active, onSelect, alertCount = 0 }: TabNavProps) {
   return (
     <nav
@@ -32,7 +28,6 @@ export default function TabNav({ active, onSelect, alertCount = 0 }: TabNavProps
           {TABS.map((tab) => {
             const isActive = tab.id === active;
             const Icon = tab.icon;
-
             return (
               <button
                 key={tab.id}
@@ -52,7 +47,6 @@ export default function TabNav({ active, onSelect, alertCount = 0 }: TabNavProps
                 />
                 <span className="hidden sm:inline uppercase font-500">{tab.label}</span>
                 <span className="sm:hidden uppercase font-500 text-[10px]">{tab.shortLabel}</span>
-
                 {/* Alert badge */}
                 {tab.id === "alerts" && alertCount > 0 && (
                   <span
@@ -62,7 +56,6 @@ export default function TabNav({ active, onSelect, alertCount = 0 }: TabNavProps
                     {alertCount}
                   </span>
                 )}
-
                 {/* Hover underline */}
                 {!isActive && (
                   <span
@@ -78,5 +71,4 @@ export default function TabNav({ active, onSelect, alertCount = 0 }: TabNavProps
     </nav>
   );
 }
-
 export { TABS };

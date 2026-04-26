@@ -7,12 +7,10 @@ import VPSHealth from "./components/VPSHealth";
 import Alerts from "./components/Alerts";
 import Projects from "./components/Projects";
 import Runbooks from "./components/Runbooks";
-
+import RamiChat from "./components/RamiChat";
 export default function Dashboard() {
   const [tab, setTab] = useState<TabId>("command");
   const [alertCount, setAlertCount] = useState(0);
-
-  // Fetch live alert count from /api/alerts
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
@@ -22,15 +20,12 @@ export default function Dashboard() {
         const high = data?.latest?.high ?? 0;
         const warn = data?.latest?.warn ?? 0;
         setAlertCount(high + warn);
-      } catch {
-        // silently fail — badge just stays 0
-      }
+      } catch {}
     };
     fetchAlerts();
     const interval = setInterval(fetchAlerts, 60000);
     return () => clearInterval(interval);
   }, []);
-
   return (
     <div style={{ minHeight: "100vh", background: "#080b0f" }}>
       <Header />
@@ -41,13 +36,14 @@ export default function Dashboard() {
         {tab === "alerts"   && <Alerts />}
         {tab === "projects" && <Projects />}
         {tab === "runbooks" && <Runbooks />}
+        {tab === "rami"     && <RamiChat />}
       </main>
       <footer
         className="max-w-7xl mx-auto px-4 sm:px-6 py-4 mt-8 flex items-center justify-between"
         style={{ borderTop: "1px solid #1e2d3d" }}
       >
         <span className="text-xs" style={{ color: "#1e2d3d" }}>
-          Ayman Operator Console · v1.1.0
+          Ayman Operator Console · v1.2.0
         </span>
         <span className="text-xs" style={{ color: "#1e2d3d" }}>
           Live · VPS connected

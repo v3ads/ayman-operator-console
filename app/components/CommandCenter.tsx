@@ -58,10 +58,7 @@ export default function CommandCenter() {
   const startTimeRef = useRef<number>(0);
   const outputBufRef = useRef<string>("");
   const isRunningRef = useRef(false);
-  // Keep isRunningRef in sync with isRunning state
-  useEffect(() => {
-    isRunningRef.current = isRunning;
-  }, [isRunning]);
+  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
   // ── WebSocket connect ──────────────────────────────────────────────────────
   const connect = useCallback(() => {
     if (wsRef.current && wsRef.current.readyState <= 1) return;
@@ -69,9 +66,7 @@ export default function CommandCenter() {
     const url = `${WS_URL}/?token=${encodeURIComponent(WS_TOKEN)}`;
     const ws = new WebSocket(url);
     wsRef.current = ws;
-    ws.onopen = () => {
-      setConnState("connected");
-    };
+    ws.onopen = () => setConnState("connected");
     ws.onmessage = (evt) => {
       try {
         const msg = JSON.parse(evt.data);
@@ -81,27 +76,16 @@ export default function CommandCenter() {
           const clean = stripAnsi(msg.data);
           outputBufRef.current += clean;
           setCurrentOutput(outputBufRef.current);
-          // Auto-scroll
           requestAnimationFrame(() => {
-            if (outputRef.current) {
-              outputRef.current.scrollTop = outputRef.current.scrollHeight;
-            }
+            if (outputRef.current) outputRef.current.scrollTop = outputRef.current.scrollHeight;
           });
         } else if (msg.type === "done") {
-          // Hermes finished responding — add to history
           const duration = ((Date.now() - startTimeRef.current) / 1000).toFixed(1) + "s";
           const finalOutput = outputBufRef.current.trim();
           const cmd = currentCmdRef.current;
           const ts = new Date().toLocaleTimeString("en-GB", { hour12: false });
           const id = ++entryIdRef.current;
-          setLog(prev => [{
-            id,
-            cmd,
-            output: finalOutput,
-            ts,
-            status: "ok",
-            duration,
-          }, ...prev.slice(0, 49)]);
+          setLog(prev => [{ id, cmd, output: finalOutput, ts, status: "ok", duration }, ...prev.slice(0, 49)]);
           setIsRunning(false);
           isRunningRef.current = false;
         } else if (msg.type === "error") {
@@ -120,16 +104,11 @@ export default function CommandCenter() {
   }, []);
   useEffect(() => {
     connect();
-    return () => {
-      wsRef.current?.close();
-    };
+    return () => { wsRef.current?.close(); };
   }, [connect]);
-  // ── Send message to Hermes AI ─────────────────────────────────────────────
+  // ── Run a shell command ───────────────────────────────────────────────────
   const run = useCallback((cmd: string) => {
-    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
-      connect();
-      return;
-    }
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) { connect(); return; }
     if (isRunningRef.current) return;
     currentCmdRef.current = cmd;
     startTimeRef.current = Date.now();
@@ -137,45 +116,24 @@ export default function CommandCenter() {
     setCurrentOutput("");
     setIsRunning(true);
     isRunningRef.current = true;
-    // Show command in input field briefly
     setInput(cmd);
-    // Send message to Hermes AI (no newline needed — server handles it)
+    // Send as shell command
     wsRef.current.send(JSON.stringify({ type: "input", data: cmd }));
-    // Clear input after sending
     setTimeout(() => setInput(""), 300);
-    // Safety timeout after 120s (Hermes can take a while for complex tasks)
     setTimeout(() => {
-      if (isRunningRef.current) {
-        setIsRunning(false);
-        isRunningRef.current = false;
-      }
-    }, 120000);
+      if (isRunningRef.current) { setIsRunning(false); isRunningRef.current = false; }
+    }, 60000);
   }, [connect]);
   const handleKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && input.trim()) run(input.trim());
   };
-  // ── Connection indicator ───────────────────────────────────────────────────
-  const connColor = {
-    connected:    "#10b981",
-    connecting:   "#f59e0b",
-    disconnected: "#64748b",
-    error:        "#ef4444",
-  }[connState];
-  const connLabel = {
-    connected:    "Connected",
-    connecting:   "Connecting…",
-    disconnected: "Disconnected",
-    error:        "Error",
-  }[connState];
+  const connColor = { connected: "#10b981", connecting: "#f59e0b", disconnected: "#64748b", error: "#ef4444" }[connState];
+  const connLabel = { connected: "Connected", connecting: "Connecting…", disconnected: "Disconnected", error: "Error" }[connState];
   return (
     <div className="animate-slideIn grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* ── Left: Quick Commands + Input ── */}
       <div className="lg:col-span-1 space-y-4">
-        {/* Connection status */}
-        <div
-          className="flex items-center justify-between px-3 py-2 rounded"
-          style={{ background: "#0a0f16", border: "1px solid #1e2d3d" }}
-        >
+        <div className="flex items-center justify-between px-3 py-2 rounded" style={{ background: "#0a0f16", border: "1px solid #1e2d3d" }}>
           <div className="flex items-center gap-2">
             {connState === "connecting" ? (
               <Loader2 size={12} style={{ color: connColor }} className="animate-spin" />
@@ -187,28 +145,24 @@ export default function CommandCenter() {
             <span style={{ fontSize: 11, color: connColor }}>{connLabel}</span>
           </div>
           {connState !== "connected" && connState !== "connecting" && (
-            <button
-              onClick={connect}
-              className="flex items-center gap-1 px-2 py-1 rounded text-[10px] transition-colors"
-              style={{ background: "#131a22", color: "#f59e0b", border: "1px solid #1e2d3d" }}
-            >
+            <button onClick={connect} className="flex items-center gap-1 px-2 py-1 rounded text-[10px]" style={{ background: "#131a22", color: "#f59e0b", border: "1px solid #1e2d3d" }}>
               <RefreshCw size={10} /> Reconnect
             </button>
           )}
         </div>
-        <Card title="Quick Commands" subtitle="Click to ask Rami">
+        <Card title="Quick Commands" subtitle="Click to execute">
           <div className="p-3 grid grid-cols-1 gap-2">
             {quickCommands.map((q) => (
               <button
-                key={q.cmd}
+                key={q.label}
                 onClick={() => run(q.cmd)}
-                disabled={connState !== "connected" || isRunning}
-                className="flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all duration-150 group cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: "#131a22", border: "1px solid #1e2d3d", color: "#94a3b8" }}
+                disabled={isRunning || connState !== "connected"}
+                className="flex items-center gap-3 px-3 py-2.5 rounded text-left transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: "#0a0f16", border: "1px solid #1e2d3d", color: "#94a3b8" }}
                 onMouseEnter={(e) => {
-                  if (connState === "connected" && !isRunning) {
+                  if (!isRunning && connState === "connected") {
                     (e.currentTarget as HTMLButtonElement).style.borderColor = "#f59e0b";
-                    (e.currentTarget as HTMLButtonElement).style.color = "#f59e0b";
+                    (e.currentTarget as HTMLButtonElement).style.color = "#e2e8f0";
                   }
                 }}
                 onMouseLeave={(e) => {
@@ -226,82 +180,51 @@ export default function CommandCenter() {
             ))}
           </div>
         </Card>
-        {/* Manual input */}
-        <Card title="Chat with Rami">
+        {/* Terminal Input */}
+        <Card title="Terminal Input">
           <div className="p-3">
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded"
-              style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#334155"}` }}
-            >
+            <div className="flex items-center gap-2 px-3 py-2 rounded" style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#334155"}` }}>
               <Terminal size={12} style={{ color: "#f59e0b", flexShrink: 0 }} />
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder={connState === "connected" ? "Ask Rami anything…" : "Not connected…"}
+                placeholder={connState === "connected" ? "hermes ..." : "Not connected…"}
                 disabled={connState !== "connected" || isRunning}
                 className="flex-1 bg-transparent text-xs outline-none placeholder-slate-700 disabled:opacity-50"
                 style={{ color: "#e2e8f0", fontFamily: "inherit" }}
               />
               {isRunning && <Loader2 size={11} style={{ color: "#f59e0b" }} className="animate-spin shrink-0" />}
             </div>
-            <p className="text-[10px] mt-2" style={{ color: "#334155" }}>
-              Press Enter to send · {connLabel}
-            </p>
+            <p className="text-[10px] mt-2" style={{ color: "#334155" }}>Press Enter to execute · {connLabel}</p>
           </div>
         </Card>
       </div>
       {/* ── Right: Live Output + History ── */}
       <div className="lg:col-span-2 space-y-4">
-        {/* Live output */}
         {(isRunning || currentOutput) && (
-          <Card
-            title="Live Output"
-            subtitle={isRunning ? `Rami is responding…` : "Last response"}
-          >
-            <div
-              ref={outputRef}
-              className="p-3 overflow-auto"
-              style={{ maxHeight: 320, background: "#080b0f", borderRadius: 4 }}
-            >
-              <pre
-                className="text-[11px] whitespace-pre-wrap"
-                style={{ color: "#10b981", fontFamily: "inherit", margin: 0 }}
-              >
+          <Card title="Live Output" subtitle={isRunning ? "Running…" : "Last command"}>
+            <div ref={outputRef} className="p-3 overflow-auto" style={{ maxHeight: 320, background: "#080b0f", borderRadius: 4 }}>
+              <pre className="text-[11px] whitespace-pre-wrap" style={{ color: "#10b981", fontFamily: "inherit", margin: 0 }}>
                 {currentOutput || " "}
               </pre>
-              {isRunning && (
-                <span
-                  className="inline-block w-2 h-3 ml-0.5 animate-pulse"
-                  style={{ background: "#f59e0b", verticalAlign: "middle" }}
-                />
-              )}
+              {isRunning && <span className="inline-block w-2 h-3 ml-0.5 animate-pulse" style={{ background: "#f59e0b", verticalAlign: "middle" }} />}
             </div>
           </Card>
         )}
-        {/* Command history */}
         {log.length > 0 && (
           <Card title="Command History" subtitle="This session">
             <div className="divide-y" style={{ borderColor: "#1e2d3d" }}>
               {log.map((entry) => (
                 <div key={entry.id} className="px-4 py-3 hover:bg-[#131a22] transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] w-14 shrink-0" style={{ color: "#334155" }}>
-                      {entry.ts}
-                    </span>
-                    <code className="flex-1 text-xs truncate" style={{ color: "#94a3b8" }}>
-                      {entry.cmd}
-                    </code>
-                    <span className="text-[10px] shrink-0" style={{ color: "#334155" }}>
-                      {entry.duration}
-                    </span>
+                    <span className="text-[10px] w-14 shrink-0" style={{ color: "#334155" }}>{entry.ts}</span>
+                    <code className="flex-1 text-xs truncate" style={{ color: "#94a3b8" }}>{entry.cmd}</code>
+                    <span className="text-[10px] shrink-0" style={{ color: "#334155" }}>{entry.duration}</span>
                     <StatusBadge status={entry.status as "ok" | "err" | "warn"} />
                   </div>
                   {entry.output && (
-                    <pre
-                      className="mt-2 text-[10px] whitespace-pre-wrap rounded px-2 py-1.5"
-                      style={{ background: "#080b0f", color: "#64748b", border: "1px solid #1e2d3d", maxHeight: 120, overflow: "auto" }}
-                    >
+                    <pre className="mt-2 text-[10px] whitespace-pre-wrap rounded px-2 py-1.5" style={{ background: "#080b0f", color: "#64748b", border: "1px solid #1e2d3d", maxHeight: 120, overflow: "auto" }}>
                       {entry.output.slice(0, 800)}{entry.output.length > 800 ? "\n…" : ""}
                     </pre>
                   )}
@@ -310,16 +233,11 @@ export default function CommandCenter() {
             </div>
           </Card>
         )}
-        {/* Empty state */}
         {!isRunning && !currentOutput && log.length === 0 && (
           <Card title="Live Output" subtitle="Session only · resets on reload">
             <div className="p-6 text-center" style={{ color: "#334155" }}>
               <Terminal size={24} className="mx-auto mb-2 opacity-30" />
-              <p className="text-xs">
-                {connState === "connected"
-                  ? "Run a command to see output here"
-                  : "Connect to the VPS to run commands"}
-              </p>
+              <p className="text-xs">{connState === "connected" ? "Run a command to see output here" : "Connect to the VPS to run commands"}</p>
             </div>
           </Card>
         )}
