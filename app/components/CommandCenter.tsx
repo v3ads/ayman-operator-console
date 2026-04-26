@@ -12,14 +12,14 @@ const WS_TOKEN = process.env.NEXT_PUBLIC_WS_TOKEN ?? "ws-ayman-2026-secure";
 // ── Quick commands ────────────────────────────────────────────────────────────
 const quickCommands = [
   { label: "System Status",         cmd: "uptime && free -h && df -h /",       icon: "Activity",  group: "system" },
-  { label: "Docker PS",             cmd: "sudo docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'", icon: "BarChart2", group: "system" },
-  { label: "Hermes Logs",           cmd: "sudo docker logs --tail 50 hermes-agent-0rp3-hermes-gateway-1 2>&1", icon: "Terminal",  group: "system" },
+  { label: "Docker PS",             cmd: "docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'", icon: "BarChart2", group: "system" },
+  { label: "Hermes Logs",           cmd: "docker logs --tail 50 hermes-agent-0rp3-hermes-gateway-1 2>&1", icon: "Terminal",  group: "system" },
   { label: "Disk Usage",            cmd: "df -h && du -sh /opt/hermes-workspaces/*", icon: "HardDrive", group: "system" },
   { label: "CPU / RAM",             cmd: "top -bn1 | head -20",                icon: "Cpu",       group: "system" },
-  { label: "Restart Hermes Web",    cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart hermes-agent", icon: "RotateCw",  group: "hermes" },
-  { label: "Stop Hermes Web",       cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose stop hermes-agent",    icon: "StopWeb",   group: "hermes" },
-  { label: "Restart Hermes WA",     cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart hermes-gateway", icon: "RotateCwWA", group: "hermes" },
-  { label: "Stop Hermes WA",        cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose stop hermes-gateway",    icon: "StopWA",    group: "hermes" },
+  { label: "Restart Hermes Web",    cmd: "docker restart hermes-agent-0rp3-hermes-agent-1",   icon: "RotateCw",  group: "hermes" },
+  { label: "Stop Hermes Web",       cmd: "docker stop hermes-agent-0rp3-hermes-agent-1",     icon: "StopWeb",   group: "hermes" },
+  { label: "Restart Hermes WA",     cmd: "docker restart hermes-agent-0rp3-hermes-gateway-1", icon: "RotateCwWA", group: "hermes" },
+  { label: "Stop Hermes WA",        cmd: "docker stop hermes-agent-0rp3-hermes-gateway-1",   icon: "StopWA",    group: "hermes" },
 ];
 const ICON_MAP: Record<string, React.ReactNode> = {
   Activity:   <Activity size={13} />,
