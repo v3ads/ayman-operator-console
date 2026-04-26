@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Terminal, ChevronRight, Activity, RefreshCw, Cpu, HardDrive,
-  BarChart2, RotateCw, Trash2, Wifi, WifiOff, Loader2
+  BarChart2, RotateCw, Square, Wifi, WifiOff, Loader2, MessageCircle, Globe
 } from "lucide-react";
 import Card from "./Card";
 import StatusBadge from "./StatusBadge";
@@ -11,23 +11,30 @@ const WS_URL = process.env.NEXT_PUBLIC_WS_URL ?? "wss://hermes.ramihost.cloud/ws
 const WS_TOKEN = process.env.NEXT_PUBLIC_WS_TOKEN ?? "ws-ayman-2026-secure";
 // ── Quick commands ────────────────────────────────────────────────────────────
 const quickCommands = [
-  { label: "System Status",    cmd: "uptime && free -h && df -h /",       icon: "Activity"  },
-  { label: "Docker PS",        cmd: "sudo docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'", icon: "BarChart2" },
-  { label: "Hermes Logs",      cmd: "sudo docker logs --tail 30 hermes-agent-0rp3-hermes-gateway-1 2>&1", icon: "Terminal" },
-  { label: "Alert Status",     cmd: "cat /opt/hermes-workspaces/alert-state.json | python3 -m json.tool", icon: "Activity" },
-  { label: "Disk Usage",       cmd: "df -h && du -sh /opt/hermes-workspaces/*", icon: "HardDrive" },
-  { label: "CPU/RAM",          cmd: "top -bn1 | head -20",                icon: "Cpu"       },
-  { label: "Restart Hermes",   cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart", icon: "RotateCw" },
-  { label: "Clear Screen",     cmd: "clear",                              icon: "Trash2"    },
+  { label: "System Status",         cmd: "uptime && free -h && df -h /",       icon: "Activity",  group: "system" },
+  { label: "Docker PS",             cmd: "sudo docker ps --format 'table {{.Names}}\\t{{.Status}}\\t{{.Ports}}'", icon: "BarChart2", group: "system" },
+  { label: "Hermes Logs",           cmd: "sudo docker logs --tail 50 hermes-agent-0rp3-hermes-gateway-1 2>&1", icon: "Terminal",  group: "system" },
+  { label: "Disk Usage",            cmd: "df -h && du -sh /opt/hermes-workspaces/*", icon: "HardDrive", group: "system" },
+  { label: "CPU / RAM",             cmd: "top -bn1 | head -20",                icon: "Cpu",       group: "system" },
+  { label: "Restart Hermes Web",    cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart hermes-agent", icon: "RotateCw",  group: "hermes" },
+  { label: "Stop Hermes Web",       cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose stop hermes-agent",    icon: "StopWeb",   group: "hermes" },
+  { label: "Restart Hermes WA",     cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose restart hermes-gateway", icon: "RotateCwWA", group: "hermes" },
+  { label: "Stop Hermes WA",        cmd: "cd /docker/hermes-agent-0rp3 && sudo docker compose stop hermes-gateway",    icon: "StopWA",    group: "hermes" },
 ];
 const ICON_MAP: Record<string, React.ReactNode> = {
-  Activity:  <Activity size={13} />,
-  Terminal:  <Terminal size={13} />,
-  Cpu:       <Cpu size={13} />,
-  HardDrive: <HardDrive size={13} />,
-  BarChart2: <BarChart2 size={13} />,
-  RotateCw:  <RotateCw size={13} />,
-  Trash2:    <Trash2 size={13} />,
+  Activity:   <Activity size={13} />,
+  Terminal:   <Terminal size={13} />,
+  Cpu:        <Cpu size={13} />,
+  HardDrive:  <HardDrive size={13} />,
+  BarChart2:  <BarChart2 size={13} />,
+  RotateCw:   <RotateCw size={13} />,
+  StopWeb:    <Square size={13} />,
+  RotateCwWA: <MessageCircle size={13} />,
+  StopWA:     <Square size={13} />,
+};
+const GROUP_COLOR: Record<string, string> = {
+  system: "#f59e0b",
+  hermes: "#10b981",
 };
 // ── Types ─────────────────────────────────────────────────────────────────────
 type ConnState = "connecting" | "connected" | "disconnected" | "error";
@@ -170,7 +177,7 @@ export default function CommandCenter() {
                   (e.currentTarget as HTMLButtonElement).style.color = "#94a3b8";
                 }}
               >
-                <span style={{ color: "#f59e0b" }}>{ICON_MAP[q.icon]}</span>
+                <span style={{ color: GROUP_COLOR[q.group] ?? "#f59e0b" }}>{ICON_MAP[q.icon]}</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-600">{q.label}</div>
                   <div className="text-[10px] truncate" style={{ color: "#334155" }}>{q.cmd}</div>
