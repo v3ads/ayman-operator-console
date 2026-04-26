@@ -1,12 +1,12 @@
 "use client";
 import { Terminal, Server, Bell, FolderKanban, BookOpen, Bot } from "lucide-react";
 const TABS = [
-  { id: "command",  label: "Command",  shortLabel: "CMD",  icon: Terminal },
-  { id: "health",   label: "VPS Health", shortLabel: "VPS", icon: Server },
-  { id: "alerts",   label: "Alerts",   shortLabel: "ALRT", icon: Bell },
-  { id: "projects", label: "Projects", shortLabel: "PROJ", icon: FolderKanban },
-  { id: "runbooks", label: "Runbooks", shortLabel: "RBK",  icon: BookOpen },
-  { id: "rami",     label: "Rami",     shortLabel: "RAMI", icon: Bot },
+  { id: "rami",     label: "Rami",       shortLabel: "RAMI", icon: Bot },
+  { id: "command",  label: "Command",    shortLabel: "CMD",  icon: Terminal },
+  { id: "health",   label: "VPS Health", shortLabel: "VPS",  icon: Server },
+  { id: "alerts",   label: "Alerts",     shortLabel: "ALRT", icon: Bell },
+  { id: "runbooks", label: "Runbooks",   shortLabel: "RBK",  icon: BookOpen },
+  { id: "projects", label: "Projects",   shortLabel: "PROJ", icon: FolderKanban },
 ] as const;
 export type TabId = (typeof TABS)[number]["id"];
 interface TabNavProps {
