@@ -35,8 +35,8 @@ const C = {
   red: "#ef4444",
   yellow: "#eab308",
   blue: "#3b82f6",
-  muted: "#64748b",
-  dim: "#334155",
+  muted: "#94a3b8",
+  dim: "#64748b",
   border: "#1e2d3d",
   surface: "#0d1117",
   card: "#0a0f16",
@@ -154,7 +154,7 @@ export default function VPSHealth() {
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-5">
         <div style={{ fontSize: 11, color: C.muted }}>
-          <span style={{ color: C.dim }}>LAST AUDIT:</span>{" "}
+          <span style={{ color: C.muted }}>LAST AUDIT:</span>{" "}
           <span style={{ color: C.amber, fontFamily: "JetBrains Mono, monospace" }}>{host.auditTime}</span>
         </div>
         <button
@@ -173,11 +173,11 @@ export default function VPSHealth() {
         className="flex flex-wrap gap-4 mb-5 px-4 py-3 rounded"
         style={{ background: C.card, border: `1px solid ${C.border}`, fontSize: 12 }}
       >
-        <span><span style={{ color: C.dim }}>HOST</span> <span style={{ color: C.amber, fontFamily: "monospace" }}>{host.hostname}</span></span>
-        <span><span style={{ color: C.dim }}>OS</span> <span style={{ color: C.text }}>{host.os}</span></span>
-        <span><span style={{ color: C.dim }}>KERNEL</span> <span style={{ color: C.text }}>{host.kernel}</span></span>
-        <span><span style={{ color: C.dim }}>UPTIME</span> <span style={{ color: C.green }}>{host.uptime}</span></span>
-        <span><span style={{ color: C.dim }}>IP</span> <span style={{ color: C.text, fontFamily: "monospace" }}>{host.publicIp}</span></span>
+        <span><span style={{ color: C.muted }}>HOST</span> <span style={{ color: C.amber, fontFamily: "monospace" }}>{host.hostname}</span></span>
+        <span><span style={{ color: C.muted }}>OS</span> <span style={{ color: C.text }}>{host.os}</span></span>
+        <span><span style={{ color: C.muted }}>KERNEL</span> <span style={{ color: C.text }}>{host.kernel}</span></span>
+        <span><span style={{ color: C.muted }}>UPTIME</span> <span style={{ color: C.green }}>{host.uptime}</span></span>
+        <span><span style={{ color: C.muted }}>IP</span> <span style={{ color: C.text, fontFamily: "monospace" }}>{host.publicIp}</span></span>
       </div>
 
       {/* Summary badges */}
@@ -256,7 +256,7 @@ export default function VPSHealth() {
                       <span style={{ fontFamily: "monospace", fontSize: 11 }}>MEM {stats.mem}</span>
                     </>
                   )}
-                  <span style={{ fontSize: 10, color: C.dim }}>{c.uptime}</span>
+                  <span style={{ fontSize: 10, color: C.muted }}>{c.uptime}</span>
                 </div>
               </div>
             );
@@ -291,25 +291,25 @@ export default function VPSHealth() {
         <SectionTitle icon={<Shield size={13} />} title="Security" />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Sec Updates</div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Sec Updates</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: security.securityUpdates > 0 ? C.red : C.green, fontFamily: "monospace" }}>
               {security.securityUpdates}
             </div>
           </div>
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Banned Now</div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Banned Now</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: security.bannedNow > 0 ? C.yellow : C.green, fontFamily: "monospace" }}>
               {security.bannedNow}
             </div>
           </div>
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Root Login</div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Root Login</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: security.permitRoot === "no" ? C.green : C.red, fontFamily: "monospace" }}>
               {security.permitRoot === "no" ? "DISABLED" : "ENABLED"}
             </div>
           </div>
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 12px" }}>
-            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Password Auth</div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Password Auth</div>
             <div style={{ fontSize: 13, fontWeight: 700, color: security.passwordAuth === "no" ? C.green : C.red, fontFamily: "monospace" }}>
               {security.passwordAuth === "no" ? "DISABLED" : "ENABLED"}
             </div>
@@ -317,7 +317,7 @@ export default function VPSHealth() {
         </div>
         {security.topOffenders.length > 0 && (
           <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "10px 14px" }}>
-            <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Top SSH Offenders (24h)</div>
+            <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>Top SSH Offenders (24h)</div>
             <div className="flex flex-wrap gap-2">
               {security.topOffenders.map((o, i) => (
                 <span key={i} style={{ fontFamily: "monospace", fontSize: 11, color: C.muted }}>

@@ -29,7 +29,7 @@ export default function Projects() {
           { label: "Total",    value: projects.length,                                        color: "#e2e8f0" },
           { label: "Healthy",  value: healthy,                                                color: "#10b981" },
           { label: "Degraded", value: projects.filter(p => p.status === "degraded").length,   color: "#f59e0b" },
-          { label: "Paused",   value: projects.filter(p => p.status === "paused").length,     color: "#64748b" },
+          { label: "Paused",   value: projects.filter(p => p.status === "paused").length,     color: "#94a3b8" },
         ].map((s) => (
           <div
             key={s.label}
@@ -39,7 +39,7 @@ export default function Projects() {
             <div className="text-2xl font-700" style={{ color: s.color, fontFamily: "'Syne',sans-serif" }}>
               {s.value}
             </div>
-            <div className="text-[10px] uppercase tracking-widest mt-1" style={{ color: "#334155" }}>
+            <div className="text-[10px] uppercase tracking-widest mt-1" style={{ color: "#94a3b8" }}>
               {s.label}
             </div>
           </div>
@@ -79,7 +79,7 @@ export default function Projects() {
                   >
                     {p.name}
                   </div>
-                  <div className="text-xs mt-0.5" style={{ color: "#64748b" }}>
+                  <div className="text-xs mt-0.5" style={{ color: "#94a3b8" }}>
                     {p.description}
                   </div>
                 </div>
@@ -87,7 +87,7 @@ export default function Projects() {
               </div>
 
               {/* Meta row */}
-              <div className="flex flex-wrap gap-3 text-[11px]" style={{ color: "#334155" }}>
+              <div className="flex flex-wrap gap-3 text-[11px]" style={{ color: "#94a3b8" }}>
                 <span className="flex items-center gap-1">
                   <Code2 size={11} style={{ color: LANG_COLOR[p.lang] ?? "#64748b" }} />
                   <span style={{ color: LANG_COLOR[p.lang] ?? "#64748b" }}>{p.lang}</span>
@@ -96,7 +96,7 @@ export default function Projects() {
                   <GitBranch size={11} />
                   {p.branch}
                 </span>
-                <code className="text-[10px]" style={{ color: "#64748b" }}>
+                <code className="text-[10px]" style={{ color: "#94a3b8" }}>
                   {p.commit}
                 </code>
                 <span className="flex items-center gap-1">
@@ -108,7 +108,7 @@ export default function Projects() {
               {/* Task progress */}
               <div>
                 <div className="flex justify-between text-[10px] mb-1.5">
-                  <span className="uppercase tracking-widest" style={{ color: "#64748b" }}>Tasks</span>
+                  <span className="uppercase tracking-widest" style={{ color: "#94a3b8" }}>Tasks</span>
                   <span style={{ color: "#94a3b8" }}>{p.tasks.done} / {p.tasks.total}</span>
                 </div>
                 <div className="h-1 rounded-full" style={{ background: "#1e2d3d" }}>
@@ -117,7 +117,7 @@ export default function Projects() {
                     style={{ width: `${taskPct}%`, background: barColor }}
                   />
                 </div>
-                <div className="text-right text-[10px] mt-0.5" style={{ color: "#334155" }}>
+                <div className="text-right text-[10px] mt-0.5" style={{ color: "#94a3b8" }}>
                   {taskPct}%
                 </div>
               </div>

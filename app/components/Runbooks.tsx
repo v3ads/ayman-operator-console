@@ -24,19 +24,19 @@ export default function Runbooks() {
         className="flex items-center gap-3 px-4 py-3 rounded-lg"
         style={{ background: "#0f1623", border: "1px solid #1e2d3d" }}
       >
-        <BookOpen size={14} style={{ color: "#334155", flexShrink: 0 }} />
+        <BookOpen size={14} style={{ color: "#94a3b8", flexShrink: 0 }} />
         <input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search runbooks…"
-          className="flex-1 bg-transparent text-xs outline-none placeholder-slate-700"
+          className="flex-1 bg-transparent text-xs outline-none placeholder-slate-500"
           style={{ color: "#e2e8f0", fontFamily: "inherit" }}
         />
         {search && (
           <button
             onClick={() => setSearch("")}
             className="text-xs cursor-pointer"
-            style={{ color: "#334155" }}
+            style={{ color: "#94a3b8" }}
           >
             ✕
           </button>
@@ -46,7 +46,7 @@ export default function Runbooks() {
       {/* Accordion */}
       <div className="space-y-2">
         {filtered.length === 0 && (
-          <div className="text-center py-12 text-xs" style={{ color: "#334155" }}>
+          <div className="text-center py-12 text-xs" style={{ color: "#94a3b8" }}>
             No runbooks match "{search}"
           </div>
         )}
@@ -78,7 +78,7 @@ export default function Runbooks() {
                     <span
                       key={tag}
                       className="text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider"
-                      style={{ background: "#1e2d3d", color: "#64748b" }}
+                      style={{ background: "#1e2d3d", color: "#94a3b8" }}
                     >
                       {tag}
                     </span>

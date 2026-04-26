@@ -82,7 +82,7 @@ function Chip({
       className="hidden sm:flex flex-col items-end"
       style={{ color: "#64748b" }}
     >
-      <div className="flex items-center gap-1 text-[9px] uppercase tracking-widest" style={{ color: "#334155" }}>
+      <div className="flex items-center gap-1 text-[9px] uppercase tracking-widest" style={{ color: "#64748b" }}>
         {icon}
         {label}
       </div>

@@ -35,8 +35,8 @@ const C = {
   red: "#ef4444",
   yellow: "#eab308",
   blue: "#3b82f6",
-  muted: "#64748b",
-  dim: "#334155",
+  muted: "#94a3b8",
+  dim: "#64748b",
   border: "#1e2d3d",
   surface: "#0d1117",
   card: "#0a0f16",
@@ -77,7 +77,7 @@ function AlertItem({ alert }: { alert: AlertCard }) {
           )}
         </div>
         <div style={{ fontSize: 12, color: C.muted, marginTop: 3, lineHeight: 1.5 }}>{alert.body}</div>
-        <div className="flex items-center gap-3 mt-1.5" style={{ fontSize: 10, color: C.dim }}>
+        <div className="flex items-center gap-3 mt-1.5" style={{ fontSize: 10, color: C.muted }}>
           <span style={{ fontFamily: "monospace" }}>{dateStr} {timeStr}</span>
           <span>SVC: {alert.service}</span>
         </div>
@@ -140,7 +140,7 @@ export default function Alerts() {
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-5">
         <div style={{ fontSize: 11, color: C.muted }}>
-          <span style={{ color: C.dim }}>LAST CHECK:</span>{" "}
+          <span style={{ color: C.muted }}>LAST CHECK:</span>{" "}
           <span style={{ color: C.amber, fontFamily: "JetBrains Mono, monospace" }}>
             {new Date(data.fetchedAt).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
           </span>
@@ -159,19 +159,19 @@ export default function Alerts() {
       {/* Summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
         <div style={{ background: C.card, border: `1px solid ${latest.high > 0 ? "rgba(239,68,68,0.4)" : C.border}`, borderRadius: 6, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>HIGH Active</div>
+          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>HIGH Active</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: latest.high > 0 ? C.red : C.green, fontFamily: "monospace" }}>{latest.high}</div>
         </div>
         <div style={{ background: C.card, border: `1px solid ${latest.warn > 0 ? "rgba(234,179,8,0.3)" : C.border}`, borderRadius: 6, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>WARN Active</div>
+          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>WARN Active</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: latest.warn > 0 ? C.yellow : C.green, fontFamily: "monospace" }}>{latest.warn}</div>
         </div>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>OK Checks</div>
+          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>OK Checks</div>
           <div style={{ fontSize: 24, fontWeight: 700, color: C.green, fontFamily: "monospace" }}>{latest.ok}</div>
         </div>
         <div style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "12px 14px" }}>
-          <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em" }}>Quiet Hours</div>
+          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em" }}>Quiet Hours</div>
           <div style={{ fontSize: 13, fontWeight: 700, color: latest.quietHours ? C.amber : C.muted, fontFamily: "monospace", marginTop: 4 }}>
             {latest.quietHours ? "ACTIVE" : "OFF"}
           </div>
@@ -182,12 +182,12 @@ export default function Alerts() {
       <div className="flex flex-wrap gap-2 mb-5">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded" style={{ background: C.card, border: `1px solid ${C.border}`, fontSize: 11 }}>
           <Bell size={11} style={{ color: C.amber }} />
-          <span style={{ color: C.dim }}>EMAIL:</span>
+          <span style={{ color: C.muted }}>EMAIL:</span>
           <span style={{ color: C.text }}>{latest.emailAction || "—"}</span>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded" style={{ background: C.card, border: `1px solid ${C.border}`, fontSize: 11 }}>
           <Bell size={11} style={{ color: C.green }} />
-          <span style={{ color: C.dim }}>WHATSAPP:</span>
+          <span style={{ color: C.muted }}>WHATSAPP:</span>
           <span style={{ color: C.text }}>{latest.whatsappAction || "—"}</span>
         </div>
       </div>
@@ -195,7 +195,7 @@ export default function Alerts() {
       {/* 24h activity sparkline */}
       {history.length > 1 && (
         <div className="mb-5 px-4 py-3 rounded" style={{ background: C.card, border: `1px solid ${C.border}` }}>
-          <div style={{ fontSize: 10, color: C.dim, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+          <div style={{ fontSize: 10, color: C.muted, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
             24h Alert History ({history.length} runs)
           </div>
           <div className="flex items-end gap-0.5" style={{ height: 32 }}>
@@ -214,7 +214,7 @@ export default function Alerts() {
               />
             ))}
           </div>
-          <div className="flex justify-between mt-1" style={{ fontSize: 9, color: C.dim }}>
+          <div className="flex justify-between mt-1" style={{ fontSize: 9, color: C.muted }}>
             <span>24h ago</span>
             <span>now</span>
           </div>

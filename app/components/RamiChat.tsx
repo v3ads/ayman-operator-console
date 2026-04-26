@@ -149,7 +149,7 @@ export default function RamiChat() {
         <div className="flex flex-col" style={{ minHeight: 400 }}>
           <div className="flex-1 overflow-auto p-4 space-y-4" style={{ maxHeight: 520 }}>
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center h-48 text-center" style={{ color: "#334155" }}>
+              <div className="flex flex-col items-center justify-center h-48 text-center" style={{ color: "#94a3b8" }}>
                 <Bot size={32} className="mb-3 opacity-30" />
                 <p className="text-xs">Ask Rami anything about the VPS, containers, or projects.</p>
                 <p className="text-[10px] mt-1 opacity-60">Rami can run commands, check logs, and help you manage the server.</p>
@@ -160,7 +160,7 @@ export default function RamiChat() {
                 {/* Avatar */}
                 <div
                   className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 mt-0.5"
-                  style={{ background: msg.role === "user" ? "#1e2d3d" : "#0a1628", border: `1px solid ${msg.role === "user" ? "#334155" : "#f59e0b33"}` }}
+                  style={{ background: msg.role === "user" ? "#1e2d3d" : "#0a1628", border: `1px solid ${msg.role === "user" ? "#64748b" : "#f59e0b33"}` }}
                 >
                   {msg.role === "user" ? (
                     <User size={12} style={{ color: "#94a3b8" }} />
@@ -174,7 +174,7 @@ export default function RamiChat() {
                     className="px-3 py-2 rounded-lg text-xs leading-relaxed"
                     style={{
                       background: msg.role === "user" ? "#1e2d3d" : "#0a1628",
-                      border: `1px solid ${msg.role === "user" ? "#334155" : "#1e2d3d"}`,
+                      border: `1px solid ${msg.role === "user" ? "#64748b" : "#1e2d3d"}`,
                       color: msg.role === "user" ? "#e2e8f0" : "#94a3b8",
                       whiteSpace: "pre-wrap",
                       wordBreak: "break-word",
@@ -185,7 +185,7 @@ export default function RamiChat() {
                       <span className="inline-block w-1.5 h-3 ml-0.5 animate-pulse align-middle" style={{ background: "#f59e0b" }} />
                     )}
                   </div>
-                  <span className="text-[9px]" style={{ color: "#334155" }}>{msg.ts}</span>
+                  <span className="text-[9px]" style={{ color: "#94a3b8" }}>{msg.ts}</span>
                 </div>
               </div>
             ))}
@@ -196,7 +196,7 @@ export default function RamiChat() {
             <div className="flex items-center gap-2">
               <div
                 className="flex-1 flex items-center gap-2 px-3 py-2 rounded"
-                style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#334155"}` }}
+                style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#64748b"}` }}
               >
                 <input
                   value={input}
@@ -204,7 +204,7 @@ export default function RamiChat() {
                   onKeyDown={handleKey}
                   placeholder={connState === "connected" ? "Ask Rami anything…" : "Not connected…"}
                   disabled={connState !== "connected" || isStreaming}
-                  className="flex-1 bg-transparent text-xs outline-none placeholder-slate-700 disabled:opacity-50"
+                  className="flex-1 bg-transparent text-xs outline-none placeholder-slate-500 disabled:opacity-50"
                   style={{ color: "#e2e8f0", fontFamily: "inherit" }}
                 />
                 {isStreaming && <Loader2 size={11} style={{ color: "#f59e0b" }} className="animate-spin shrink-0" />}
@@ -218,7 +218,7 @@ export default function RamiChat() {
                 <Send size={13} />
               </button>
             </div>
-            <p className="text-[10px] mt-1.5" style={{ color: "#334155" }}>Press Enter or tap send · {connLabel}</p>
+            <p className="text-[10px] mt-1.5" style={{ color: "#94a3b8" }}>Press Enter or tap send · {connLabel}</p>
           </div>
         </div>
       </Card>

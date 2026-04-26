@@ -27,12 +27,12 @@ export default function Card({ children, className = "", style, title, subtitle,
           <div>
             <div
               className="text-xs uppercase tracking-widest font-600"
-              style={{ color: "#64748b" }}
+              style={{ color: "#94a3b8" }}
             >
               {title}
             </div>
             {subtitle && (
-              <div className="text-[10px] mt-0.5" style={{ color: "#334155" }}>
+              <div className="text-[10px] mt-0.5" style={{ color: "#94a3b8" }}>
                 {subtitle}
               </div>
             )}

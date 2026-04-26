@@ -180,9 +180,9 @@ export default function CommandCenter() {
                 <span style={{ color: GROUP_COLOR[q.group] ?? "#f59e0b" }}>{ICON_MAP[q.icon]}</span>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-600">{q.label}</div>
-                  <div className="text-[10px] truncate" style={{ color: "#334155" }}>{q.cmd}</div>
+                  <div className="text-[10px] truncate" style={{ color: "#94a3b8" }}>{q.cmd}</div>
                 </div>
-                <ChevronRight size={11} style={{ color: "#334155" }} />
+                <ChevronRight size={11} style={{ color: "#94a3b8" }} />
               </button>
             ))}
           </div>
@@ -190,7 +190,7 @@ export default function CommandCenter() {
         {/* Terminal Input */}
         <Card title="Terminal Input">
           <div className="p-3">
-            <div className="flex items-center gap-2 px-3 py-2 rounded" style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#334155"}` }}>
+            <div className="flex items-center gap-2 px-3 py-2 rounded" style={{ background: "#080b0f", border: `1px solid ${connState === "connected" ? "#1e2d3d" : "#64748b"}` }}>
               <Terminal size={12} style={{ color: "#f59e0b", flexShrink: 0 }} />
               <input
                 value={input}
@@ -198,12 +198,12 @@ export default function CommandCenter() {
                 onKeyDown={handleKey}
                 placeholder={connState === "connected" ? "hermes ..." : "Not connected…"}
                 disabled={connState !== "connected" || isRunning}
-                className="flex-1 bg-transparent text-xs outline-none placeholder-slate-700 disabled:opacity-50"
+                className="flex-1 bg-transparent text-xs outline-none placeholder-slate-500 disabled:opacity-50"
                 style={{ color: "#e2e8f0", fontFamily: "inherit" }}
               />
               {isRunning && <Loader2 size={11} style={{ color: "#f59e0b" }} className="animate-spin shrink-0" />}
             </div>
-            <p className="text-[10px] mt-2" style={{ color: "#334155" }}>Press Enter to execute · {connLabel}</p>
+            <p className="text-[10px] mt-2" style={{ color: "#94a3b8" }}>Press Enter to execute · {connLabel}</p>
           </div>
         </Card>
       </div>
@@ -225,13 +225,13 @@ export default function CommandCenter() {
               {log.map((entry) => (
                 <div key={entry.id} className="px-4 py-3 hover:bg-[#131a22] transition-colors">
                   <div className="flex items-center gap-3">
-                    <span className="text-[10px] w-14 shrink-0" style={{ color: "#334155" }}>{entry.ts}</span>
+                    <span className="text-[10px] w-14 shrink-0" style={{ color: "#94a3b8" }}>{entry.ts}</span>
                     <code className="flex-1 text-xs truncate" style={{ color: "#94a3b8" }}>{entry.cmd}</code>
-                    <span className="text-[10px] shrink-0" style={{ color: "#334155" }}>{entry.duration}</span>
+                    <span className="text-[10px] shrink-0" style={{ color: "#94a3b8" }}>{entry.duration}</span>
                     <StatusBadge status={entry.status as "ok" | "err" | "warn"} />
                   </div>
                   {entry.output && (
-                    <pre className="mt-2 text-[10px] whitespace-pre-wrap rounded px-2 py-1.5" style={{ background: "#080b0f", color: "#64748b", border: "1px solid #1e2d3d", maxHeight: 120, overflow: "auto" }}>
+                    <pre className="mt-2 text-[10px] whitespace-pre-wrap rounded px-2 py-1.5" style={{ background: "#080b0f", color: "#94a3b8", border: "1px solid #1e2d3d", maxHeight: 120, overflow: "auto" }}>
                       {entry.output.slice(0, 800)}{entry.output.length > 800 ? "\n…" : ""}
                     </pre>
                   )}
@@ -242,7 +242,7 @@ export default function CommandCenter() {
         )}
         {!isRunning && !currentOutput && log.length === 0 && (
           <Card title="Live Output" subtitle="Session only · resets on reload">
-            <div className="p-6 text-center" style={{ color: "#334155" }}>
+            <div className="p-6 text-center" style={{ color: "#94a3b8" }}>
               <Terminal size={24} className="mx-auto mb-2 opacity-30" />
               <p className="text-xs">{connState === "connected" ? "Run a command to see output here" : "Connect to the VPS to run commands"}</p>
             </div>
